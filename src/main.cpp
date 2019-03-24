@@ -62,46 +62,43 @@ int main(int argc, char **argv) {
 
     // get node handle
     ros::NodeHandle n;
-    ros::Rate loopRate(1.0);
-    std::string topicName = "cloud_topic";
+    ros::Rate loopRate(5);
+    std::string topicName = "cloud";
 
-    ros::Publisher demoPublisher = n.advertise<PointCloud>(topicName.c_str(),10);
+    ros::Publisher pub = n.advertise<PointCloud>(topicName.c_str(),5);
     PointCloud msg;
-    msg.header.frame_id = "base_link";
-    // msg->height = msg->width = 1;
 
-    ROS_INFO("Publishing point cloud on topic \"%s\" once every second.", topicName.c_str());
+    // Establishing TF Relationship
+    msg.header.frame_id = "map";
+    ROS_INFO("Publishing point cloud on topic \"%s\" once every 0.2 second.", topicName.c_str());
     
     // TO create Random Numbers
     const int range_from  = -5; const int range_to = 5;
     std::random_device rand_dev; std::mt19937   generator(rand_dev());
-    std::uniform_real_distribution<>  distr(range_from, range_to);
+    std::uniform_real_distribution<double>  distr(range_from, range_to);
+    std::uniform_real_distribution<double>  distro(0, 1);
 
+    // Starting the ROS Loop
     while (ros::ok())
     {
         pcl_conversions::toPCL(ros::Time::now(), msg.header.stamp);
-        // create point cloud object
-        // pcl::PointCloud<pcl::PointXYZ> myCloud;
-        // myCloud->header.frame_id = "some_tf_frame";
 
-        // fill cloud with random points
+        // Creating Plane Point Cloud
         for (int v=0; v<100; ++v)
         {
             pcl::PointXYZ newPoint;
             newPoint.x = distr(generator) ;
             newPoint.y = distr(generator) ;
             newPoint.z = 0;
-            ROS_INFO_STREAM("X"<<newPoint.x);
-            ROS_INFO_STREAM("Y"<<newPoint.y);
-            ROS_INFO_STREAM("Z"<<newPoint.z);
             msg.points.push_back(newPoint);
         }
 
         // publish point cloud
-        demoPublisher.publish(msg);
+        pub.publish(msg);
         ros::spinOnce ();
+        // Clear Previous Points
         msg.clear();
-            // pause for loop delay
+        // pause for loop delay
         loopRate.sleep();
     }
 
