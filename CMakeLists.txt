@@ -31,14 +31,14 @@ catkin_package( INCLUDE_DIRS include
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include 
+include_directories(include/box_detector
 	${catkin_INCLUDE_DIRS}
 	${PCL_INCLUDE_DIRS})
 
 add_definitions(${PCL_DEFINITIONS})
 
 ## Declare a C++ executable
-add_executable(plt src/main.cpp )
+add_executable(plt src/main.cpp src/generate.cpp)
 
 
 ## Specify libraries to link a library or executable target against

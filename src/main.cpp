@@ -45,62 +45,85 @@
  *  PCL and ROS                               
  *  
  */
-
 #include "ros/ros.h"
-#include <stdio.h>
-#include <pcl_ros/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
 
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+#include "generate.hpp"
+
 
 int main(int argc, char **argv) {
   // initializing the node name as walker
   ros::init(argc, argv, "plt");
 
-  ros::start();
-
-    // get node handle
-    ros::NodeHandle n;
-    ros::Rate loopRate(5);
-    std::string topicName = "cloud";
-
-    ros::Publisher pub = n.advertise<PointCloud>(topicName.c_str(),5);
-    PointCloud msg;
-
-    // Establishing TF Relationship
-    msg.header.frame_id = "map";
-    ROS_INFO("Publishing point cloud on topic \"%s\" once every 0.2 second.", topicName.c_str());
-    
-    // TO create Random Numbers
-    const int range_from  = -5; const int range_to = 5;
-    std::random_device rand_dev; std::mt19937   generator(rand_dev());
-    std::uniform_real_distribution<double>  distr(range_from, range_to);
-    std::uniform_real_distribution<double>  distro(0, 1);
-
-    // Starting the ROS Loop
+  // Starting the ROS Loop
     while (ros::ok())
     {
-        pcl_conversions::toPCL(ros::Time::now(), msg.header.stamp);
-
-        // Creating Plane Point Cloud
-        for (int v=0; v<100; ++v)
-        {
-            pcl::PointXYZ newPoint;
-            newPoint.x = distr(generator) ;
-            newPoint.y = distr(generator) ;
-            newPoint.z = 0;
-            msg.points.push_back(newPoint);
-        }
-
-        // publish point cloud
-        pub.publish(msg);
-        ros::spinOnce ();
-        // Clear Previous Points
-        msg.clear();
-        // pause for loop delay
-        loopRate.sleep();
+        Generate gen;
     }
-
-    return 1;
+    
 }
+
+
+//     std::string topicName = "cloud";
+
+    
+    
+//     // PointCloud msgplane;
+//     PointCloud msgbox;
+
+//     // Establishing TF Relationship
+//     // msg.header.frame_id = "map";
+//     msgbox.header.frame_id = "map";
+//     ROS_INFO("Publishing point cloud on topic \"%s\" once every 0.2 second.", topicName.c_str());
+    
+//     // TO create Random Numbers
+//     std::random_device rand_dev; std::mt19937   generator(rand_dev());
+//     std::uniform_real_distribution<double>  distr(-5, 5);
+//     std::uniform_real_distribution<double>  distro(0, 1);
+
+//     // Starting the ROS Loop
+//     while (ros::ok())
+//     {
+//         // pcl_conversions::toPCL(ros::Time::now(), msg.header.stamp);
+//         pcl_conversions::toPCL(ros::Time::now(), msgbox.header.stamp);
+
+//         // Creating Plane Point Cloud
+//         // for (int v=0; v<1000; ++v)
+//         // {
+//         //     pcl::PointXYZ newPoint;
+//         //     newPoint.x = distr(generator) ;
+//         //     newPoint.y = distr(generator) ;
+//         //     newPoint.z = 0;
+//         //     msg.points.push_back(newPoint);
+//         // }
+
+//         // Creating Box Point Cloud
+//         for (int v=0; v<100; ++v)
+//         {
+//             pcl::PointXYZ newPoint;
+//             newPoint.x = distr(generator) ;
+//             newPoint.y = distr(generator) ;
+//             newPoint.z = 0;
+//             ROS_INFO_STREAM("x"<<newPoint.x);
+//             ROS_INFO_STREAM("y"<<newPoint.y);
+//             ROS_INFO_STREAM("z"<<newPoint.z);
+            
+//             msgbox.points.push_back(newPoint);
+//         }
+        
+        
+//         // publish Plane point cloud
+//         // pub.publish(msg);
+//         // publish Box point cloud
+//         pub.publish(msgbox);
+
+
+//         ros::spinOnce ();
+//         // Clear Previous Points
+//         // msg.clear();
+//         msgbox.clear();
+//         // pause for loop delay
+//         loopRate.sleep();
+//     }
+
+//     return 1;
+// }
