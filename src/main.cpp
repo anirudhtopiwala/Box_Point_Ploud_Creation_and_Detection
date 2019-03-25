@@ -50,7 +50,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
-
+#include <pcl/filters/passthrough.h>
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
@@ -60,6 +60,11 @@ private:
 
     PointCloud msg_plane;
     PointCloud msg_box;
+    
+    PointCloud::Ptr msg_box_filt;
+
+
+    PointCloud merged;
     ros::NodeHandle n;
     ros::Publisher pub;
     ros::Timer plane_pub_timer;
@@ -69,9 +74,11 @@ private:
     std::mt19937  generator;
     std::uniform_real_distribution<> xy_rnd; 
     std::uniform_real_distribution<> yaw_rnd;
+    std::uniform_real_distribution<> noise_rnd;
 
     void generate_plane() {
-        msg_plane.header.frame_id = "map";
+        msg_plane.header.frame_id = "world";
+        pcl_conversions::toPCL(ros::Time::now(), msg_plane.header.stamp);
         for (double i = -5.0; i <= 5.0; i+=0.1) {
             for (double j = -5.0; j <= 5.0; j+=0.1) {
                 pcl::PointXYZ point;
@@ -84,7 +91,8 @@ private:
     }
 
     void generate_box(double x,double y, double yaw ) {
-        msg_box.header.frame_id = "map";
+        // msg_box.header.frame_id = "map";
+        pcl_conversions::toPCL(ros::Time::now(), msg_box.header.stamp);
         for (double i = x+0; i <=x+1 ; i+=0.1) {
             for (double j = y+0; j <=y+1; j+=0.1) {
                 for (double k = 0; k <=1; k+=0.1) {
@@ -99,9 +107,38 @@ private:
 
     }
 
-    void publisher_Callback(const ros::TimerEvent&) {
-        pub.publish(msg_plane);
+    PointCloud make_noise() {
 
+            PointCloud merged_noise;
+            for (int i = 0; i < merged.points.size(); i++) {
+                pcl::PointXYZ point;
+                point.x = merged.points[i].x + noise_rnd(generator);
+                point.y = merged.points[i].y + noise_rnd(generator);
+                point.z = merged.points[i].z + noise_rnd(generator);
+                merged_noise.push_back(point);
+            }
+            return merged_noise;
+
+    }
+
+
+    void merging_both(){
+        // pcl::PassThrough<pcl::PointXYZ> pass;
+        // pass.setInputCloud (msg_box);
+        // pass.setFilterFieldName ("z");
+        // pass.setFilterLimits (0.0, 1.0);
+        // //pass.setFilterLimitsNegative (true);
+        // pass.filter (msg_box);
+        merged = msg_plane + msg_box;
+    }
+
+
+
+    void publisher_Callback(const ros::TimerEvent&) {
+        // pub.publish(msg_plane);
+        auto merged_noise = make_noise();
+        merged_noise.header.frame_id = "world";
+        pub.publish(merged_noise);
     }
 
     void box_Callback(const ros::TimerEvent&) {
@@ -109,17 +146,19 @@ private:
         double y = xy_rnd(generator);
         double yaw = yaw_rnd(generator);
         generate_box(x,y,yaw);
-        pub.publish(msg_box);
+        // pub.publish(msg_box);
+        merging_both();
+        msg_box.clear();
 
     }
 
 
 public:
 
-    Generate(): xy_rnd(-2.0, 2.0),yaw_rnd(0.0, 3.1415/2),generator(rand_dev()) {
+    Generate(): xy_rnd(-2.0, 2.0),yaw_rnd(0.0, 3.1415/2),noise_rnd(-0.0002, 0.0002),generator(rand_dev()) {
         
         pub = n.advertise<PointCloud>("/cloud",1000);
-        // plane_pub_timer = n.createTimer(ros::Duration(0.2), &Generate::publisher_Callback, this);
+        plane_pub_timer = n.createTimer(ros::Duration(0.2), &Generate::publisher_Callback, this);
         box_pub_timer = n.createTimer(ros::Duration(1), &Generate::box_Callback, this);
         generate_plane();
     }
