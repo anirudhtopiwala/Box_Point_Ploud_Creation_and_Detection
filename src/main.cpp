@@ -46,61 +46,56 @@
  *  
  */
 
-#include "ros/ros.h"
-#include <stdio.h>
+#include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <pcl_ros/point_cloud.h>
-#include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
-int main(int argc, char **argv) {
-  // initializing the node name as walker
-  ros::init(argc, argv, "plt");
+class Generate {
 
-  ros::start();
+private:
 
-    // get node handle
+    PointCloud msg_plane;
     ros::NodeHandle n;
-    ros::Rate loopRate(5);
-    std::string topicName = "cloud";
-
-    ros::Publisher pub = n.advertise<PointCloud>(topicName.c_str(),5);
-    PointCloud msg;
-
-    // Establishing TF Relationship
-    msg.header.frame_id = "map";
-    ROS_INFO("Publishing point cloud on topic \"%s\" once every 0.2 second.", topicName.c_str());
+    ros::Publisher pub;
+    ros::Timer msg_pub_timer;
     
-    // TO create Random Numbers
-    const int range_from  = -5; const int range_to = 5;
-    std::random_device rand_dev; std::mt19937   generator(rand_dev());
-    std::uniform_real_distribution<double>  distr(range_from, range_to);
-    std::uniform_real_distribution<double>  distro(0, 1);
 
-    // Starting the ROS Loop
-    while (ros::ok())
-    {
-        pcl_conversions::toPCL(ros::Time::now(), msg.header.stamp);
-
-        // Creating Plane Point Cloud
-        for (int v=0; v<100; ++v)
-        {
-            pcl::PointXYZ newPoint;
-            newPoint.x = distr(generator) ;
-            newPoint.y = distr(generator) ;
-            newPoint.z = 0;
-            msg.points.push_back(newPoint);
+    void generate_plane() {
+        msg_plane.header.frame_id = "map";
+        for (double i = -5.0; i <= 5.0; i+=0.1) {
+            for (double j = -5.0; j <= 5.0; j+=0.1) {
+                pcl::PointXYZ point;
+                point.x = i;
+                point.y = j;
+                point.z = 0.0;
+                msg_plane.push_back(point);
+            }
         }
-
-        // publish point cloud
-        pub.publish(msg);
-        ros::spinOnce ();
-        // Clear Previous Points
-        msg.clear();
-        // pause for loop delay
-        loopRate.sleep();
     }
 
-    return 1;
+    void publisher_Callback(const ros::TimerEvent&) {
+        pub.publish(msg_plane);
+    }
+
+public:
+
+    Generate() {
+        pub = n.advertise<PointCloud>("/cloud",1000);
+        msg_pub_timer = n.createTimer(ros::Duration(0.2), &Generate::publisher_Callback, this);
+        generate_plane();
+    }
+
+};
+
+
+int main(int argc, char** argv) {
+
+    ros::init (argc, argv, "plt");
+    Generate gen;
+    ros::spin();
+
 }
