@@ -139,6 +139,7 @@ private:
         auto merged_noise = make_noise();
         merged_noise.header.frame_id = "world";
         pub.publish(merged_noise);
+        ROS_INFO_STREAM("Publishing");
     }
 
     void box_Callback(const ros::TimerEvent&) {

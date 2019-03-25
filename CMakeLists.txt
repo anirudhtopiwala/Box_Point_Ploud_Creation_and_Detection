@@ -39,10 +39,16 @@ add_definitions(${PCL_DEFINITIONS})
 
 ## Declare a C++ executable
 add_executable(plt src/main.cpp )
+add_executable(seg src/segment.cpp )
+
 
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(plt 
+target_link_libraries(plt
 	${catkin_LIBRARIES}
 	${PCL_LIBRARIES})
+
+target_link_libraries(seg
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES})
 
