@@ -65,6 +65,10 @@ private:
     ros::Timer plane_pub_timer;
     ros::Timer box_pub_timer;
     
+    std::random_device rand_dev;
+    std::mt19937  generator;
+    std::uniform_real_distribution<> xy_rnd; 
+    std::uniform_real_distribution<> yaw_rnd;
 
     void generate_plane() {
         msg_plane.header.frame_id = "map";
@@ -79,14 +83,14 @@ private:
         }
     }
 
-    void generate_box() {
+    void generate_box(double x,double y, double yaw ) {
         msg_box.header.frame_id = "map";
-        for (double i = 0; i <=1 ; i+=0.1) {
-            for (double j = 0; j <=1; j+=0.1) {
+        for (double i = x+0; i <=x+1 ; i+=0.1) {
+            for (double j = y+0; j <=y+1; j+=0.1) {
                 for (double k = 0; k <=1; k+=0.1) {
                     pcl::PointXYZ point;
-                    point.x = i;
-                    point.y = j;
+                    point.x = x + (i-x)*cos(yaw) - (j-y)*sin(yaw);
+                    point.y = y + (i-x)*sin(yaw) + (j-y)*cos(yaw);
                     point.z = k;
                     msg_box.push_back(point);
                 }
@@ -97,18 +101,27 @@ private:
 
     void publisher_Callback(const ros::TimerEvent&) {
         pub.publish(msg_plane);
+
+    }
+
+    void box_Callback(const ros::TimerEvent&) {
+        double x = xy_rnd(generator);
+        double y = xy_rnd(generator);
+        double yaw = yaw_rnd(generator);
+        generate_box(x,y,yaw);
         pub.publish(msg_box);
 
     }
 
+
 public:
 
-    Generate() {
+    Generate(): xy_rnd(-2.0, 2.0),yaw_rnd(0.0, 3.1415/2),generator(rand_dev()) {
+        
         pub = n.advertise<PointCloud>("/cloud",1000);
-        plane_pub_timer = n.createTimer(ros::Duration(0.2), &Generate::publisher_Callback, this);
-        box_pub_timer = n.createTimer(ros::Duration(1), &Generate::publisher_Callback, this);
+        // plane_pub_timer = n.createTimer(ros::Duration(0.2), &Generate::publisher_Callback, this);
+        box_pub_timer = n.createTimer(ros::Duration(1), &Generate::box_Callback, this);
         generate_plane();
-        generate_box();
     }
 
 };
