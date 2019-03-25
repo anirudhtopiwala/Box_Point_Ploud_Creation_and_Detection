@@ -59,9 +59,11 @@ class Generate {
 private:
 
     PointCloud msg_plane;
+    PointCloud msg_box;
     ros::NodeHandle n;
     ros::Publisher pub;
-    ros::Timer msg_pub_timer;
+    ros::Timer plane_pub_timer;
+    ros::Timer box_pub_timer;
     
 
     void generate_plane() {
@@ -77,16 +79,36 @@ private:
         }
     }
 
+    void generate_box() {
+        msg_box.header.frame_id = "map";
+        for (double i = 0; i <=1 ; i+=0.1) {
+            for (double j = 0; j <=1; j+=0.1) {
+                for (double k = 0; k <=1; k+=0.1) {
+                    pcl::PointXYZ point;
+                    point.x = i;
+                    point.y = j;
+                    point.z = k;
+                    msg_box.push_back(point);
+                }
+            }
+        }
+
+    }
+
     void publisher_Callback(const ros::TimerEvent&) {
         pub.publish(msg_plane);
+        pub.publish(msg_box);
+
     }
 
 public:
 
     Generate() {
         pub = n.advertise<PointCloud>("/cloud",1000);
-        msg_pub_timer = n.createTimer(ros::Duration(0.2), &Generate::publisher_Callback, this);
+        plane_pub_timer = n.createTimer(ros::Duration(0.2), &Generate::publisher_Callback, this);
+        box_pub_timer = n.createTimer(ros::Duration(1), &Generate::publisher_Callback, this);
         generate_plane();
+        generate_box();
     }
 
 };
