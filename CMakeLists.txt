@@ -16,8 +16,21 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   pcl_ros  
   PCL REQUIRED
+  message_generation
 )
 
+add_service_files(
+  DIRECTORY
+  srv
+  FILES
+  write_to_file.srv
+)
+
+
+ generate_messages(
+   DEPENDENCIES
+   std_msgs
+   )
 
 catkin_package( INCLUDE_DIRS include
 #  LIBRARIES box_detector

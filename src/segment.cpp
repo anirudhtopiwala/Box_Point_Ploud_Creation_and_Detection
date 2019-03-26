@@ -58,6 +58,10 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
+#include <iostream>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include "box_detector/write_to_file.h"
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 
@@ -68,7 +72,7 @@ private:
 	PointCloud::Ptr curr;
 	ros::Publisher pub;
     ros::Timer plane_pub_timer;
-
+	ros::ServiceServer serv;
 	void Callback(const PointCloud::ConstPtr& cloud) {
   		*curr = *cloud; // save current cloud 
   		auto ans = detect_plane();
@@ -128,7 +132,15 @@ public:
 			sub_ptcloud = n.subscribe("/cloud", 1000, &Segment::Callback, this);
 			pub = n.advertise<PointCloud>("/cloud_plane",1000);
 			// plane_pub_timer = n.createTimer(ros::Duration(0.2), &Segment::Callback, this);
-			// write_serv = n.advertiseService("/write_to_file", &DetectBox::writeToFile, this);
+			serv = n.advertiseService("/write_to_file", &Segment::writeToFile, this);
+	}
+
+	bool writeToFile(box_detector::write_to_file::Request& req, box_detector::write_to_file::Response& res ) {
+			auto ans = detect_plane();
+			ROS_WARN_STREAM("Saving .pcd File and affecting local storage");
+			pcl::io::savePCDFileASCII ("segmented_box.pcd", *ans);
+			// res.ifdone = true;
+			return true;
 	}
 
 
