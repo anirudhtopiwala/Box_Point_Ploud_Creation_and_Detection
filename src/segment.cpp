@@ -41,19 +41,15 @@
  *
  *  @section DESCRIPTION
  *
- *  This program is used to synthesize box pointcloud and then detect is using
- *  PCL and ROS                               
- *  
+ *	Here we detect the planes of the point cloud being published. The box is 
+ *	then detected and the position and orientation is then estimated. 
+ *	A service for saving the pointcloud is also added.    
+ *	 
  */
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
-
-// Include for the unfinished srv file: TODO - implement srv for writing to .pcd
-// #include <box_detector/Writetofile.h>
-
-// For use w/ finding planes
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
@@ -62,6 +58,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include "box_detector/write_to_file.h"
+
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 
@@ -73,14 +70,15 @@ private:
 	ros::Publisher pub;
     ros::Timer plane_pub_timer;
 	ros::ServiceServer serv;
+
+	// Callback for visualizing the detected box in Rviz
 	void Callback(const PointCloud::ConstPtr& cloud) {
   		*curr = *cloud; // save current cloud 
   		auto ans = detect_plane();
   		pub.publish(ans);
   	}
 
-
-
+  	// Method to implement RANSAC implementation of PCL and detect the box.
   	PointCloud::Ptr detect_plane(){
 
 		// Initialize new pointers to use in processing
@@ -93,7 +91,6 @@ private:
 		seg.setMaxIterations(400); 
 		// Set the distance to the plane for a point to be an inlier.
 		seg.setDistanceThreshold(0.01);
-		//		
 
 		PointCloud::Ptr new_cloud (new PointCloud);
 		pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
@@ -110,20 +107,17 @@ private:
 				new_cloud->points[indices_internal->indices[i]].z;
 			}
 
+		// Extarcting the detected box.
 		extract.setInputCloud(new_cloud);
 		extract.setIndices(indices_internal);
 		extract.setNegative(true);
 		extract.filter(*new_cloud);	
-
-		ROS_INFO_STREAM("Model coefficients: " << coefficients->values[0] << " " 
-                                      << coefficients->values[1] << " "
-                                      << coefficients->values[2] << " " 
-                                      << coefficients->values[3]);
+		// ROS_INFO_STREAM("Model coefficients: " << coefficients->values[0] << " " 
+  //                                     << coefficients->values[1] << " "
+  //                                     << coefficients->values[2] << " " 
+  //                                     << coefficients->values[3]);
 
 		return new_cloud;
-		
-
-			// TODO: Estimate, based on centroids/planes found, the pose.
 	}
 
 
@@ -131,7 +125,6 @@ public:
 	Segment(): curr(new PointCloud) {
 			sub_ptcloud = n.subscribe("/cloud", 1000, &Segment::Callback, this);
 			pub = n.advertise<PointCloud>("/cloud_plane",1000);
-			// plane_pub_timer = n.createTimer(ros::Duration(0.2), &Segment::Callback, this);
 			serv = n.advertiseService("/write_to_file", &Segment::writeToFile, this);
 	}
 
@@ -139,16 +132,13 @@ public:
 			auto ans = detect_plane();
 			ROS_WARN_STREAM("Saving .pcd File and affecting local storage");
 			pcl::io::savePCDFileASCII ("segmented_box.pcd", *ans);
-			// res.ifdone = true;
+			// res= true;
 			return true;
 	}
-
-
 };
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "segment");
   Segment seg;
   ros::spin();
-  // return 0;
 }
