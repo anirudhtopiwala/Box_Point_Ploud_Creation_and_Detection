@@ -52,6 +52,10 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/point_types.h>
+
+#define PI 3.14159265;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
@@ -92,6 +96,10 @@ private:
     // Generate Box with random position and Orientation
     void generate_box(double x,double y, double yaw ) {
         // msg_box.header.frame_id = "map";
+        x=0;
+        y=0;
+        yaw=3.14159265*0.4;
+        ROS_INFO_STREAM("Angle given: " << yaw* 180 / PI;);
         pcl_conversions::toPCL(ros::Time::now(), msg_box.header.stamp);
         for (double i = x+0; i <=x+1 ; i+=0.1) {
             for (double j = y+0; j <=y+1; j+=0.1) {
@@ -124,6 +132,7 @@ private:
 
     // Merging the plane and box point cloud.
     void merging_both(){
+
         merged = msg_plane + msg_box;
     }
 
@@ -134,7 +143,7 @@ private:
         auto merged_noise = make_noise();
         merged_noise.header.frame_id = "world";
         pub.publish(merged_noise);
-        ROS_INFO_STREAM("Publishing");
+        // ROS_INFO_STREAM("Publishing");
     }
 
     // Callback for generating random box and merging them every second.

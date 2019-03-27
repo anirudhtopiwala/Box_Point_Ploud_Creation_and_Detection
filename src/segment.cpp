@@ -47,6 +47,10 @@
  *	 
  */
 #include <ros/ros.h>
+#include <vector>
+#include <utility> 
+#include <math.h>  
+#include <stdlib.h>  
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -59,6 +63,7 @@
 #include <pcl/point_types.h>
 #include "box_detector/write_to_file.h"
 
+#define PI 3.14159265;
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 
@@ -74,15 +79,32 @@ private:
 	// Callback for visualizing the detected box in Rviz
 	void Callback(const PointCloud::ConstPtr& cloud) {
   		*curr = *cloud; // save current cloud 
+  		// remove_noise();
   		auto ans = detect_plane();
+  		locate_box(ans);
   		pub.publish(ans);
   	}
 
+  // 	void remove_noise(){
+  // 		PointCloud::Ptr temp;
+  // 		for(int i=0;i<5;i++){
+  // 			for (int i = 0; i < curr->points.size(); i++) {
+		// 		temp->points[i].x += curr->points[i].x/5;
+		// 		temp->points[i].y += curr->points[i].y/5;
+		// 		temp->points[i].z += curr->points[i].z/5;
+  // 		}
+  // 		ros::spinOnce();
+  // 	}
+
+  // 	*curr = *temp;
+  // }
+
   	// Method to implement RANSAC implementation of PCL and detect the box.
-  	PointCloud::Ptr detect_plane(){
+  	PointCloud detect_plane(){
 
 		// Initialize new pointers to use in processing
-		pcl::PointIndices::Ptr indices_internal (new pcl::PointIndices); // to store points of extracted plane
+		// to store points of extracted plane
+		pcl::PointIndices::Ptr indices_internal (new pcl::PointIndices); 
 		pcl::SACSegmentation<pcl::PointXYZ> seg;
 		seg.setOptimizeCoefficients (true);
 		// Search for a plane perpendicular to some axis (specified below).
@@ -111,27 +133,84 @@ private:
 		extract.setInputCloud(new_cloud);
 		extract.setIndices(indices_internal);
 		extract.setNegative(true);
-		extract.filter(*new_cloud);	
-		// ROS_INFO_STREAM("Model coefficients: " << coefficients->values[0] << " " 
-  //                                     << coefficients->values[1] << " "
-  //                                     << coefficients->values[2] << " " 
-  //                                     << coefficients->values[3]);
-
-		return new_cloud;
+		extract.filter(*new_cloud);
+		return *new_cloud;
 	}
+
+	// Method to find the location of detected box.
+	void locate_box(PointCloud box_cloud){
+		double x = 0;
+		double y = 0;
+		double z = 0;
+		double avg_layer_x = 0;
+		double avg_layer_y = 0;
+		std::vector<std::pair<double,double>> layer;
+		std::vector<std::pair<double,double>> corner;
+		for (int i = 0; i < box_cloud.points.size(); i++) {
+			x += box_cloud.points[i].x;
+			y += box_cloud.points[i].y;
+			z += box_cloud.points[i].z;
+
+			// Extracting points of any One plane
+			if (box_cloud.points[i].z-1<0.01){
+				layer.push_back(std::make_pair(box_cloud.points[i].x,box_cloud.points[i].y));
+				avg_layer_x += box_cloud.points[i].x;
+				avg_layer_y += box_cloud.points[i].y;
+				// ROS_INFO_STREAM("layerx"<< avg_layer_x);
+				// ROS_INFO_STREAM("layery"<< avg_layer_y);
+			}
+		}
+		double x_avg = x/box_cloud.points.size();
+		double y_avg = y/box_cloud.points.size();
+		double z_avg = z/box_cloud.points.size();
+		ROS_INFO_STREAM("New Centroid of cube is:");
+		ROS_INFO_STREAM("X: "<<x_avg);
+		ROS_INFO_STREAM("Y: "<<y_avg);
+		ROS_INFO_STREAM("Z: "<<z_avg);	
+
+		// getting Orientation
+
+		// Getting Centroid of Square (layer of cube)
+		avg_layer_x = avg_layer_x/layer.size();
+		avg_layer_y = avg_layer_y/layer.size();
+		// ROS_INFO_STREAM("layerx"<< avg_layer_x);
+		// ROS_INFO_STREAM("layery"<< avg_layer_y);
+
+		// Getting Orientation of Cube
+		for (int i=0;i<layer.size();i++){
+			auto x_sq = pow((avg_layer_x-layer[i].first),2);
+			auto y_sq = pow((avg_layer_y-layer[i].second),2);
+			double dist = sqrt(x_sq+y_sq);
+
+			// ROS_INFO_STREAM("Dist"<<dist);
+			if (dist>0.6 && (layer[i].first> avg_layer_x) && (layer[i].second> avg_layer_y)){
+				auto ang = atan2((layer[i].second-avg_layer_y),(layer[i].first- avg_layer_x)) * 180 / PI;
+				ang= ang ;
+				ROS_INFO_STREAM("X: "<< layer[i].first );
+				ROS_INFO_STREAM("y: "<< layer[i].second );
+				ROS_INFO_STREAM("Orientation in Degrees: "<< ang );
+				break;
+			}
+		}
+	}
+
+
 
 
 public:
 	Segment(): curr(new PointCloud) {
-			sub_ptcloud = n.subscribe("/cloud", 1000, &Segment::Callback, this);
+			sub_ptcloud = n.subscribe("/cloud", 1000, 
+				&Segment::Callback, this);
 			pub = n.advertise<PointCloud>("/cloud_plane",1000);
-			serv = n.advertiseService("/write_to_file", &Segment::writeToFile, this);
+			serv = n.advertiseService("/write_to_file", 
+				&Segment::writeToFile, this);
 	}
 
-	bool writeToFile(box_detector::write_to_file::Request& req, box_detector::write_to_file::Response& res ) {
+	bool writeToFile(box_detector::write_to_file::Request& req,
+			 box_detector::write_to_file::Response& res ) {
 			auto ans = detect_plane();
 			ROS_WARN_STREAM("Saving .pcd File and affecting local storage");
-			pcl::io::savePCDFileASCII ("segmented_box.pcd", *ans);
+			pcl::io::savePCDFileASCII ("segmented_box.pcd", ans);
 			// res= true;
 			return true;
 	}
