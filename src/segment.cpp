@@ -177,6 +177,8 @@ private:
 		// ROS_INFO_STREAM("layery"<< avg_layer_y);
 
 		// Getting Orientation of Cube
+		double xmax=0.0;
+		double ymax=0.0;
 		for (int i=0;i<layer.size();i++){
 			auto x_sq = pow((avg_layer_x-layer[i].first),2);
 			auto y_sq = pow((avg_layer_y-layer[i].second),2);
@@ -184,15 +186,24 @@ private:
 
 			// ROS_INFO_STREAM("Dist"<<dist);
 			if (dist>0.6 && (layer[i].first> avg_layer_x) && (layer[i].second> avg_layer_y)){
-				auto ang = atan2((layer[i].second-avg_layer_y),(layer[i].first- avg_layer_x)) * 180 / PI;
-				ang= ang ;
-				ROS_INFO_STREAM("X: "<< layer[i].first );
-				ROS_INFO_STREAM("y: "<< layer[i].second );
-				ROS_INFO_STREAM("Orientation in Degrees: "<< ang );
-				break;
+				
+				if (layer[i].first> xmax){
+					xmax = layer[i].first;
+				}
+				if (layer[i].second> ymax){
+					ymax = layer[i].second;
+				}
+					
 			}
 		}
+		auto ang = atan2( (ymax - avg_layer_y),(xmax - avg_layer_x)) * 180 / PI;
+		ang= ang-45 ;
+		// ROS_INFO_STREAM("X: "<< xmax );
+		// ROS_INFO_STREAM("y: "<< ymax );
+		ROS_INFO_STREAM("Orientation in Degrees: "<< ang );
+				
 	}
+
 
 
 

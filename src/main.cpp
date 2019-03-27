@@ -96,9 +96,9 @@ private:
     // Generate Box with random position and Orientation
     void generate_box(double x,double y, double yaw ) {
         // msg_box.header.frame_id = "map";
-        x=0;
-        y=0;
-        yaw=3.14159265*0.4;
+        // x=0;
+        // y=0;
+        // yaw=3.14159265*0.4;
         ROS_INFO_STREAM("Angle given: " << yaw* 180 / PI;);
         pcl_conversions::toPCL(ros::Time::now(), msg_box.header.stamp);
         for (double i = x+0; i <=x+1 ; i+=0.1) {
