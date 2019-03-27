@@ -82,6 +82,7 @@ private:
   		// remove_noise();
   		auto ans = detect_plane();
   		locate_box(ans);
+  		// For my own visulaization and understanding
   		pub.publish(ans);
   	}
 
@@ -153,7 +154,8 @@ private:
 
 			// Extracting points of any One plane
 			if (box_cloud.points[i].z-1<0.01){
-				layer.push_back(std::make_pair(box_cloud.points[i].x,box_cloud.points[i].y));
+				layer.push_back(std::make_pair
+					(box_cloud.points[i].x,box_cloud.points[i].y));
 				avg_layer_x += box_cloud.points[i].x;
 				avg_layer_y += box_cloud.points[i].y;
 				// ROS_INFO_STREAM("layerx"<< avg_layer_x);
@@ -185,7 +187,8 @@ private:
 			double dist = sqrt(x_sq+y_sq);
 
 			// ROS_INFO_STREAM("Dist"<<dist);
-			if (dist>0.6 && (layer[i].first> avg_layer_x) && (layer[i].second> avg_layer_y)){
+			if (dist>0.6 && (layer[i].first> avg_layer_x) 
+				&& (layer[i].second> avg_layer_y)){
 				
 				if (layer[i].first> xmax){
 					xmax = layer[i].first;
