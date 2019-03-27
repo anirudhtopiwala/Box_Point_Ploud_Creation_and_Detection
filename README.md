@@ -16,7 +16,7 @@ The Details of the Problem are as follows:
 The output from the first node of synthesizing data is as follows:
 
 <p align="center">
-<img src="https://github.com/anirudhtopiwala/Human_Detector/blob/master/additional_files/Hog_cell_size_comaprison.png">
+<img src="https://github.com/anirudhtopiwala/Box_Point_Ploud_Creation_and_Detection/blob/master/output/pclcube.gif">
 </p>
 
 ## Build Instructions
