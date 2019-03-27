@@ -72,7 +72,3 @@ Things tried: tried to remove all the points of cube when z=0, by defining them 
 In the current implementation to get orientation of cube, it works when cube angle rotation is less than 45 degrees. This is because, the current approach always tries to get the top right corner point of a layer of cube (square), and when the rotation is more than 45, the algorithm will mistakenly identify the right bottom point and therefore giving inaccurate values.   
 A more efficient approach can be taking an image of cube from above and getting the angle using image processing. This is not tried yet.
 
-3) **Noise removal by taking 5 consecutive readings**
-I have implemented a method remove_noise which is commented out. Because of the structure of the code and class, I was having issues defining multiple callbacks of different frequencies. 
-
-

@@ -72,33 +72,49 @@ private:
 	ros::NodeHandle n;
 	ros::Subscriber sub_ptcloud;
 	PointCloud::Ptr curr;
+	PointCloud curr2;
 	ros::Publisher pub;
     ros::Timer plane_pub_timer;
 	ros::ServiceServer serv;
+	bool flag = true; // used for reading the values of cloud 5 times
 
 	// Callback for visualizing the detected box in Rviz
 	void Callback(const PointCloud::ConstPtr& cloud) {
   		*curr = *cloud; // save current cloud 
-  		// remove_noise();
-  		auto ans = detect_plane();
-  		locate_box(ans);
-  		// For my own visulaization and understanding
-  		pub.publish(ans);
+  		curr2 = *cloud;
+  		if (flag){
+  			remove_noise();
+  			auto ans = detect_plane();
+  			locate_box(ans);
+  			// For my own visulaization and understanding
+  			pub.publish(ans);
+  		}
   	}
 
-  // 	void remove_noise(){
-  // 		PointCloud::Ptr temp;
-  // 		for(int i=0;i<5;i++){
-  // 			for (int i = 0; i < curr->points.size(); i++) {
-		// 		temp->points[i].x += curr->points[i].x/5;
-		// 		temp->points[i].y += curr->points[i].y/5;
-		// 		temp->points[i].z += curr->points[i].z/5;
-  // 		}
-  // 		ros::spinOnce();
-  // 	}
+  	// Method to remove noise
+  	void remove_noise(){
+  		flag = false;
+		PointCloud temp;
+		 // Creating a point cloud to store values of 5 iterations of cloud.
+		  temp.width    = curr2.width;
+		  temp.height   = curr2.height;
+		  temp.is_dense = curr2.is_dense;
+		  temp.header.frame_id = curr2.header.frame_id ;
+		  temp.points.resize (temp.width * temp.height);
 
-  // 	*curr = *temp;
-  // }
+ 		// Adding values
+  		for(int i=0;i<5;i++){
+  			for (int j = 0; j < curr->points.size(); j++) {
+				temp.points[j].x += curr->points[j].x/5;
+				temp.points[j].y += curr->points[j].y/5;
+				temp.points[j].z += curr->points[j].z/5;
+  		}
+  		ros::spinOnce();
+  	}
+  	flag = true;
+  	auto tempptr = temp.makeShared();
+  	*curr = *tempptr;
+  }
 
   	// Method to implement RANSAC implementation of PCL and detect the box.
   	PointCloud detect_plane(){
