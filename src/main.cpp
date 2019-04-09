@@ -46,7 +46,7 @@
  *  both the point clouds are merged.
  *  
  */
-
+#include <iostream>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_ros/point_cloud.h>
@@ -58,6 +58,10 @@
 #define PI 3.14159265;
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+
+bool dbeq(double a , double b, double eps= 0.001){
+    return (std::abs(a-b)< eps);
+}
 
 class Generate {
 
@@ -98,22 +102,53 @@ private:
         // msg_box.header.frame_id = "map";
         // x=0;
         // y=0;
-        // yaw=3.14159265*0.4;
-        ROS_INFO_STREAM("Angle given: " << yaw* 180 / PI;);
+        // yaw=0;
+        // ROS_INFO_STREAM("Angle given: " << yaw* 180 / PI;);
         pcl_conversions::toPCL(ros::Time::now(), msg_box.header.stamp);
-        for (double i = x+0; i <=x+1 ; i+=0.1) {
-            for (double j = y+0; j <=y+1; j+=0.1) {
-                for (double k = 0; k <=1; k+=0.1) {
-                    pcl::PointXYZ point;
-                    point.x = x + (i-x)*cos(yaw) - (j-y)*sin(yaw);  
-                    point.y = y + (i-x)*sin(yaw) + (j-y)*cos(yaw);
-                    point.z = k;
-                    msg_box.push_back(point);
+        for (double k = 0.0; k <=1; k+=0.1) {
+            for (double i = x+0; i <=x+1.0 ; i+=0.1) {
+                for (double j = y+0; j <=y+1.0; j+=0.1) {
+                    if (dbeq(k,0) || dbeq(k,1)){
+                        pcl::PointXYZ point;
+                        point.x = x + (i-x)*cos(yaw) - (j-y)*sin(yaw);  
+                        point.y = y + (i-x)*sin(yaw) + (j-y)*cos(yaw);
+                        point.z = k;
+                        msg_box.push_back(point);
+                        // ROS_INFO_STREAM("Here k=0 and k=1 "<< k);
+                    }
+                    else{
+                         if (dbeq(i,x+0) || dbeq(i,x+1)){
+
+                            if (dbeq(i,x+0))                            
+                            ROS_ERROR_STREAM("Here x 0" );
+                            pcl::PointXYZ point1;
+                            point1.x = x + (i-x)*cos(yaw) - (j-y)*sin(yaw);  
+                            point1.y = y + (i-x)*sin(yaw) + (j-y)*cos(yaw);
+                            point1.z = k;
+                            msg_box.push_back(point1);
+                            if (dbeq(i,x+1))                            
+                            ROS_ERROR_STREAM("Here x 1" );
+                        }
+                        else{
+                            if (dbeq(j,y+0) || dbeq(j,y+1)){
+                                if (dbeq(j,y+0))                            
+                                ROS_ERROR_STREAM("Here y 0" );
+                                pcl::PointXYZ point2;
+                                point2.x = x + (i-x)*cos(yaw) - (j-y)*sin(yaw);  
+                                point2.y = y + (i-x)*sin(yaw) + (j-y)*cos(yaw);
+                                point2.z = k;
+                                msg_box.push_back(point2);
+                                if (dbeq(j,y+1))                            
+                                ROS_ERROR_STREAM("Here y 1" );
+                        }   }
+                         
+                    }
                 }
             }
         }
-
     }
+
+    
 
     // Generating Noise and Adding to merged point cloud
     PointCloud make_noise() {
@@ -155,7 +190,7 @@ private:
         // pub.publish(msg_box);
         merging_both();
         msg_box.clear();
-
+       ROS_ERROR_STREAM("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
     }
 
 
