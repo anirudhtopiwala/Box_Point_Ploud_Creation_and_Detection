@@ -169,13 +169,11 @@ private:
 			z += box_cloud.points[i].z;
 
 			// Extracting points of any One plane
-			if (box_cloud.points[i].z-1<0.01){
+			if (std::abs(box_cloud.points[i].z-0.5)<0.01){
 				layer.push_back(std::make_pair
 					(box_cloud.points[i].x,box_cloud.points[i].y));
 				avg_layer_x += box_cloud.points[i].x;
 				avg_layer_y += box_cloud.points[i].y;
-				// ROS_INFO_STREAM("layerx"<< avg_layer_x);
-				// ROS_INFO_STREAM("layery"<< avg_layer_y);
 			}
 		}
 		double x_avg = x/box_cloud.points.size();
@@ -184,7 +182,7 @@ private:
 		ROS_INFO_STREAM("New Centroid of cube is:");
 		ROS_INFO_STREAM("X: "<<x_avg);
 		ROS_INFO_STREAM("Y: "<<y_avg);
-		ROS_INFO_STREAM("Z: "<<z_avg);	
+		ROS_INFO_STREAM("Z: "<<z_avg-1);	
 
 		// getting Orientation
 
@@ -194,38 +192,37 @@ private:
 		// ROS_INFO_STREAM("layerx"<< avg_layer_x);
 		// ROS_INFO_STREAM("layery"<< avg_layer_y);
 
-		// Getting Orientation of Cube
-		double xmax=0.0;
-		double ymax=0.0;
+		// Getting Corners		
 		for (int i=0;i<layer.size();i++){
 			auto x_sq = pow((avg_layer_x-layer[i].first),2);
 			auto y_sq = pow((avg_layer_y-layer[i].second),2);
 			double dist = sqrt(x_sq+y_sq);
+			double diff = std::abs(dist - (1/sqrt(2)));
 
-			// ROS_INFO_STREAM("Dist"<<dist);
-			if (dist>0.6 && (layer[i].first> avg_layer_x) 
-				&& (layer[i].second> avg_layer_y)){
-				
-				if (layer[i].first> xmax){
-					xmax = layer[i].first;
-				}
-				if (layer[i].second> ymax){
-					ymax = layer[i].second;
-				}
-					
+			if (diff< 0.1){
+				corner.push_back(std::make_pair(layer[i].first, layer[i].second));
 			}
 		}
+		double xmax=avg_layer_x;
+		double ymax=avg_layer_y;
+		// ROS_INFO_STREAM("y: "<< ymax );
+		// ROS_INFO_STREAM("size"<< corner.size());
+		for (int i =0; i<corner.size();i++){
+			// ROS_WARN_STREAM("cornery"<< corner[i].second);
+			if (corner[i].second> avg_layer_y){ 
+				if (corner[i].second> ymax){
+					xmax = corner[i].first;
+					ymax = corner[i].second;
+				}
+			}
+		}
+
+		// Calculating angle
 		auto ang = atan2( (ymax - avg_layer_y),(xmax - avg_layer_x)) * 180 / PI;
 		ang= ang-45 ;
-		// ROS_INFO_STREAM("X: "<< xmax );
-		// ROS_INFO_STREAM("y: "<< ymax );
-		ROS_INFO_STREAM("Orientation in Degrees: "<< ang );
-				
+		
+		ROS_INFO_STREAM("Orientation in Degrees: "<< ang );		
 	}
-
-
-
-
 
 public:
 	Segment(): curr(new PointCloud) {
