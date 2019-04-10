@@ -26,6 +26,8 @@ The output from the first node of synthesizing data is shown on the left and the
 <img src="https://github.com/anirudhtopiwala/Box_Point_Ploud_Creation_and_Detection/blob/master/output/box_detector.gif">
 </p>
 
+The video [here](https://github.com/anirudhtopiwala/box_detector/blob/master/output/box_detector.mp4) is much clearer.
+
 ## Build Instructions
 
 To run this code in a catkin workspace:
