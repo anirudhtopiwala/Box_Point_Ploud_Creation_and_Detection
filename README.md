@@ -11,12 +11,19 @@ The Details of the Problem are as follows:
 4) estimated the position and orientation of the unit box
 5) Save the Point cloud using a service
 
+## NEW IMPROVEMENTS
+**1)The Cube is now Hollow**
+As I realized later, any camera would not able to give points inside the cube when reading point cloud data in realistic situations and therefore, code is fixed to generate a hollow cube.  
+
+**2)Get Orientation of Cube is Fixed**
+The part of getting the orientation of cube implemented in the second node is now fixed. We can see the prediction is with a +- 2 degrees accuracy. This can be improved by further removing the noise which was added earlier. 
+
 ## Output
 
-The output from the first node of synthesizing data is as follows:
+The output from the first node of synthesizing data is shown on the left and the segmented cube is shown on the right. The terminal shows the random angle given on the left and the orientation and the center of the cube predicted on the right:
 
 <p align="center">
-<img src="https://github.com/anirudhtopiwala/Box_Point_Ploud_Creation_and_Detection/blob/master/output/pclcube.gif">
+<img src="https://github.com/anirudhtopiwala/Box_Point_Ploud_Creation_and_Detection/blob/master/output/box_detector.gif">
 </p>
 
 ## Build Instructions
@@ -47,6 +54,10 @@ catkin_make
 After following the build instructions:
 Go to your workspace in terminal
 ```
+roscore
+```
+In a different terminal run
+```
 source devel/setup.bash
 rosrun box_detector plt 
 ```
@@ -67,8 +78,3 @@ The file will be outside the src folder in the base directory.
 
 1) **Remove points from bottom of the cube and the overlaying points of the plane** .
 Things tried: tried to remove all the points of cube when z=0, by defining them as NaN, which worked in rviz visualization but when tried to get centroid, the nan values created a problem. Therefore not implemented for now. 
-
-2) **Get Orientation of Cube**
-In the current implementation to get orientation of cube, it works when cube angle rotation is less than 45 degrees. This is because, the current approach always tries to get the top right corner point of a layer of cube (square), and when the rotation is more than 45, the algorithm will mistakenly identify the right bottom point and therefore giving inaccurate values.   
-A more efficient approach can be taking an image of cube from above and getting the angle using image processing. This is not tried yet.
-
