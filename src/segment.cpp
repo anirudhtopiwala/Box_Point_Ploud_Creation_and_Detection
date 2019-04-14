@@ -42,7 +42,7 @@
  *  @section DESCRIPTION
  *
  *	Here we detect the planes of the point cloud being published. The box is 
- *	then detected and the position and orientation is then estimated. 
+ *	then detected and the position and orientation is estimated. 
  *	A service for saving the pointcloud is also added.    
  *	 
  */
@@ -66,7 +66,6 @@
 #define PI 3.14159265;
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
-
 class Segment {
 private:
 	ros::NodeHandle n;
@@ -78,7 +77,15 @@ private:
 	ros::ServiceServer serv;
 	bool flag = true; // used for reading the values of cloud 5 times
 
-	// Callback for visualizing the detected box in Rviz
+	/**
+	* @brief      Callback function, which calls all the functions to remove
+				  noise and call the function locate box to get the
+				  position and orientation of the box.
+	*
+	* @param      cloud: the cloud received from the topic /cloud   
+	*
+	* @return     void   used only for publishing the segmented box
+	*/
 	void Callback(const PointCloud::ConstPtr& cloud) {
   		*curr = *cloud; // save current cloud 
   		curr2 = *cloud;
@@ -86,12 +93,22 @@ private:
   			remove_noise();
   			auto ans = detect_plane();
   			locate_box(ans);
-  			// For my own visulaization and understanding
+  			// For my own visualization and understanding
   			pub.publish(ans);
   		}
   	}
 
-  	// Method to remove noise
+  	/**
+	* @brief      It is used to remove the generated noise added before. It 
+				  does so by averaging the points over 5 consecutive point cloud
+				  readings. 
+	*
+	* @param      None: It takes the cloud data from the private variables 
+				  in the class.
+	*
+	* @return     void   pushes the point cloud back to the private variables 
+				  after removing the noise.
+	*/
   	void remove_noise(){
   		flag = false;
 		PointCloud temp;
@@ -115,8 +132,15 @@ private:
   	auto tempptr = temp.makeShared();
   	*curr = *tempptr;
   }
-
-  	// Method to implement RANSAC implementation of PCL and detect the box.
+  	/**
+	* @brief      Method to implement RANSAC implementation of PCL and segment 
+				 the box from the plane.
+	*
+	* @param      None: It takes the cloud data from the private variables 
+				  in the class.
+	*
+	* @return     pointcloud  returns the segmented box point cloud.
+	*/
   	PointCloud detect_plane(){
 
 		// Initialize new pointers to use in processing
@@ -153,8 +177,14 @@ private:
 		extract.filter(*new_cloud);
 		return *new_cloud;
 	}
-
-	// Method to find the location of detected box.
+	/**
+	* @brief      Method to locate the centroid of the box detected and the 
+				  orientation of it.
+	*
+	* @param      Pointcloud  Segmented box as input.
+	*
+	* @return     void  prints the position and orientation of the box.
+	*/
 	void locate_box(PointCloud box_cloud){
 		double x = 0;
 		double y = 0;
@@ -182,7 +212,7 @@ private:
 		ROS_INFO_STREAM("New Centroid of cube is:");
 		ROS_INFO_STREAM("X: "<<x_avg);
 		ROS_INFO_STREAM("Y: "<<y_avg);
-		ROS_INFO_STREAM("Z: "<<z_avg-1);	
+		ROS_INFO_STREAM("Z: "<<z_avg-0.1);	
 
 		// getting Orientation
 
@@ -222,17 +252,19 @@ private:
 		ang= ang-45 ;
 		
 		ROS_INFO_STREAM("Orientation in Degrees: "<< ang );		
+		ROS_INFO_STREAM("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+
 	}
 
 public:
 	Segment(): curr(new PointCloud) {
 			sub_ptcloud = n.subscribe("/cloud", 1000, 
 				&Segment::Callback, this);
-			pub = n.advertise<PointCloud>("/cloud_plane",1000);
+			pub = n.advertise<PointCloud>("/detected_box",1000);
 			serv = n.advertiseService("/write_to_file", 
 				&Segment::writeToFile, this);
 	}
-
+	// Service to save the point cloud data to file
 	bool writeToFile(box_detector::write_to_file::Request& req,
 			 box_detector::write_to_file::Response& res ) {
 			auto ans = detect_plane();

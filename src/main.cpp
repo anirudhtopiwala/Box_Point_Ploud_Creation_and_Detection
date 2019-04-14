@@ -82,7 +82,14 @@ private:
     std::uniform_real_distribution<> yaw_rnd;
     std::uniform_real_distribution<> noise_rnd;
 
-    // Generate Plane
+    /**
+    * @brief      Here I generate a plane of points with a resolution of 0.1 m
+    *
+    * @param      None: It makes the plane as given by the constraints in the 
+                        question.
+    *
+    * @return     void   pushes the cloud to the private variable of class.
+    */
     void generate_plane() {
         msg_plane.header.frame_id = "world";
         pcl_conversions::toPCL(ros::Time::now(), msg_plane.header.stamp);
@@ -97,7 +104,16 @@ private:
         }
     }
 
-    // Generate Box with random position and Orientation
+    /**
+    * @brief      Here I generate a cube box with random position and 
+                  Orientation.
+    *
+    * @param      x    The random x position of center of cube.
+    * @param      y    The random y position of center of cube.
+    * @param      yaw    The random yaw angle of the cube.
+    *
+    * @return     void   pushes the cloud to the private variable of class.
+    */
     void generate_box(double x,double y, double yaw ) {
         // msg_box.header.frame_id = "map";
         // x=0;
@@ -138,9 +154,27 @@ private:
         }
     }
 
-    
+    /**
+    * @brief      Merging the plane and box point cloud
+    *
+    * @param      None  Both the clouds are  private variables of the class.
+    *
+    * @return     void  the merged variable consisting of merged point cloud 
+                  is set here.
+    */
+    void merging_both(){
 
-    // Generating Noise and Adding to merged point cloud
+        merged = msg_plane + msg_box;
+    }
+
+    /**
+    * @brief      Generating Noise and Adding to merged point cloud
+    *
+    * @param      None gets the point cloud from the private variables 
+                  of the class.
+    *
+    * @return     PointCloud  return the cloud after adding noise to it.
+    */
     PointCloud make_noise() {
 
             PointCloud merged_noise;
@@ -155,14 +189,13 @@ private:
 
     }
 
-    // Merging the plane and box point cloud.
-    void merging_both(){
-
-        merged = msg_plane + msg_box;
-    }
-
-
-    // Callback with frequency of 5 hz for noise generation. 
+    /**
+    * @brief      Callback with frequency of 5 hz for noise generation. 
+    *
+    * @param      setting the frequency to execute the callback.
+    *
+    * @return     void   publishing the cloud to topic
+    */
     void publisher_Callback(const ros::TimerEvent&) {
         // pub.publish(msg_plane);
         auto merged_noise = make_noise();
@@ -171,7 +204,15 @@ private:
         // ROS_INFO_STREAM("Publishing");
     }
 
-    // Callback for generating random box and merging them every second.
+    /**
+    * @brief      Callback for generating random box and merging them every
+                  second.This callback is executed every second as a new box is 
+                  only generated every second. 
+    *
+    * @param      setting the frequency to execute the callback.
+    *
+    * @return     void   
+    */
     void box_Callback(const ros::TimerEvent&) {
         double x = xy_rnd(generator);
         double y = xy_rnd(generator);
@@ -197,7 +238,6 @@ public:
     }
 
 };
-
 
 int main(int argc, char** argv) {
 
