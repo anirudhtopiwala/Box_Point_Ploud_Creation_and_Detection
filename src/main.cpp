@@ -54,6 +54,14 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/point_types.h>
+#include <pcl/filters/conditional_removal.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <unordered_map>
+#include <vector>
+#include <ctime>
+#include <math.h>
+using namespace std;
+
 
 #define PI 3.14159265;
 
@@ -62,6 +70,13 @@ typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 bool dbeq(double a , double b, double eps= 0.1){
     return (std::abs(a-b)< eps);
 }
+
+// bool dist(double x1 , double y1, double x2 , double y2, double eps= 0.01){
+// 	double distance = sqrt( pow((x1-x2),2) + pow((y1-y2),2));
+// 	if (distance<1)
+// 	ROS_ERROR_STREAM("Dist"<< distance);
+//     return (std::abs(distance)< eps);
+// }
 
 class Generate {
 
@@ -163,8 +178,51 @@ private:
                   is set here.
     */
     void merging_both(){
+    	// Removing Last Layer of Box
+    	PointCloud layer1;
+  		PointCloud::Ptr box_unfilt(new pcl::PointCloud<pcl::PointXYZ>);
+  		*box_unfilt = msg_box;
+    	pcl::PassThrough<pcl::PointXYZ> pass;
+		pass.setInputCloud (box_unfilt);
+		pass.setFilterFieldName ("z");
+		pass.setFilterLimits (0.1, 1.0);
+		pass.filter (msg_box);
+		pass.setFilterLimitsNegative (true);
+		pass.filter (layer1);
 
-        merged = msg_plane + msg_box;
+
+		// Subtarcting last layer of box from plane
+
+		// Creating KdTree
+		pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+		// Setting cloud for plane
+		PointCloud::Ptr plane(new pcl::PointCloud<pcl::PointXYZ>);
+		*plane = msg_plane; 
+		kdtree.setInputCloud (plane);
+		
+		// Creating variables for kd tree
+		std::vector<int> pointIdxRadiusSearch;
+  		std::vector<float> pointRadiusSquaredDistance;
+		float radius = 0.09;
+
+		// Creating Inliers for filter		
+		pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+		pcl::ExtractIndices<pcl::PointXYZ> extract;
+
+		for (int i = 0; i < layer1.points.size(); i++) {
+			if (kdtree.radiusSearch (layer1.points[i], radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 )
+  				{
+  					for (size_t j = 0; j < pointIdxRadiusSearch.size (); ++j){
+  							inliers->indices.push_back(pointIdxRadiusSearch[j]);
+  					}
+			}
+		}	
+		extract.setInputCloud(plane);
+		extract.setIndices(inliers);
+		extract.setNegative(true);
+		extract.filter(*plane);
+		merged = msg_box + *plane ;
+
     }
 
     /**
