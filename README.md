@@ -12,6 +12,16 @@ The Details of the Problem are as follows:
 5) Remove the overlaying layers of the box and plane point cloud. 
 6) Save the Point cloud using a service
 
+## Output
+
+The output from the first node of synthesizing data is shown on the left and the segmented cube is shown on the right. The terminal shows the random angle given on the left and the orientation and the center of the cube predicted on the right:
+
+<p align="center">
+<img src="https://github.com/anirudhtopiwala/Box_Point_Ploud_Creation_and_Detection/blob/master/output/box_detector.gif">
+</p>
+
+The video [here](https://youtu.be/5SLp6oLASQ4) is much clearer.
+
 ## NEW IMPROVEMENTS (All Tasks Completed !!!)
 **1)The Cube is now Hollow**
 As I realized later, any camera would not able to give points inside the cube when reading point cloud data in realistic situations and therefore, code is fixed to generate a hollow cube.  
@@ -26,16 +36,6 @@ Removed the bottom layer of the cube using filter pass in z direction. Used **kd
 </p>
 
 **This marks the end of all tasks in this repository.**
-
-## Output
-
-The output from the first node of synthesizing data is shown on the left and the segmented cube is shown on the right. The terminal shows the random angle given on the left and the orientation and the center of the cube predicted on the right:
-
-<p align="center">
-<img src="https://github.com/anirudhtopiwala/Box_Point_Ploud_Creation_and_Detection/blob/master/output/box_detector.gif">
-</p>
-
-The video [here](https://youtu.be/5SLp6oLASQ4) is much clearer.
 
 ## Build Instructions
 
